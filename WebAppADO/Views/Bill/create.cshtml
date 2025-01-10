@@ -1,0 +1,242 @@
+﻿@model WebAppADO.Models.BillModel
+@{
+    ViewData["Title"] = "Bill";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<!-- CSS for modal -->
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgb(0,0,0);
+        background-color: rgba(0,0,0,0.4);
+        padding-top: 60px;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 5% auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+</style>
+
+
+<div class="row">
+
+    <div class="col-md-12">
+        <form asp-action="Save" method="post" id="billForm">
+
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="row">
+                <div class="col-md-3">
+                    <label asp-for="BillCode" class="control-label"></label>
+                    <input asp-for="BillCode" id="billcode" class="form-control" />
+                    <span asp-validation-for="BillCode" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="BillDates" class="control-label"></label>
+                    <input asp-for="BillDates" class="form-control" />
+                    <span asp-validation-for="BillDates" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="id" class="control-label"></label>
+                    <input asp-for="id" class="form-control" />
+                    <span asp-validation-for="id" class="text-danger"></span>
+                </div>
+
+            </div>
+
+            <br />
+
+            <div class="form-group">
+                <input type="submit" id="btnsubmit" value="Submit" class="btn btn-primary" />
+            </div>
+
+            <!-- Hidden fields to store product data -->
+            <input type="hidden" id="hiddenProductData" name="ProductData" />
+
+
+        </form>
+
+    </div>
+
+</div>
+<br />
+
+
+
+
+<div>
+    <div style="margin-top:10px">
+        <button type="button" id="Openpopup" class="btn-primary list-group-item-primary">Open PopUP</button>
+    </div>
+    <table class="table-bordered">
+        <thead>
+            <tr>
+                <th>Product name</th>
+                <th>Qty</th>
+                <th>Price</th>
+            </tr>
+        </thead>
+        <tbody id="mytblprddata">
+        </tbody>
+    </table>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- Hidden Modal for Product Form -->
+<div id="productFormModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <span id="closeModal" class="close">&times;</span>
+        <h4>Add Product</h4>
+
+        <form>
+            <div class="row">
+
+                <div class="col-md-3">
+                    <label asp-for="AddProd.ProductName" id="ProductNamett" class="control-label">Product Name</label>
+                    <input asp-for="AddProd.ProductName" id="AddProd_ProductName" class="form-control" />
+                    <span asp-validation-for="AddProd.ProductName" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="AddProd.Qty" id="Qtytt" class="control-label">Quantity</label>
+                    <input asp-for="AddProd.Qty" id="AddProd_Qty" class="form-control" />
+                    <span asp-validation-for="AddProd.Qty" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="AddProd.Price" id="Pricett" class="control-label">Price</label>
+                    <input asp-for="AddProd.Price" id="AddProd_Price" class="form-control" />
+                    <span asp-validation-for="AddProd.Price" class="text-danger"></span>
+                </div>
+
+            </div>
+
+            <br />
+
+            <div class="form-group">
+                <input type="submit" id="AddProductinTable" value="Add Product" class="btn btn-primary" />
+            </div>
+            <br />
+
+        </form>
+
+    </div>
+</div>
+
+
+
+
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/jquery/dist/jquery.js"></script>
+
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#Openpopup').click(function () {
+            $('#productFormModal').fadeIn();
+        });
+
+        $('#closeModal').click(function (){
+            $('#productFormModal').fadeOut();
+        });
+
+    });
+
+
+
+     // Handle the form submission and add data to table
+    $('#AddProductinTable').click(function (e) {
+
+        try
+        {
+            e.preventDefault(); // Prevent form submission
+
+            var productName = $('#AddProd_ProductName').val();
+            var qty = $('#AddProd_Qty').val();
+            var price = $('#AddProd_Price').val();
+
+            var newRow = `<tr>
+          <td>${productName}</td>
+          <td>${qty}</td>
+          <td>${price}</td>
+          </tr>`;
+
+            $('#mytblprddata').append(newRow);
+
+            // Clear the input fields after adding the product
+            $('#AddProd_ProductName').val('');
+            $('#AddProd_Qty').val('');
+            $('#AddProd_Price').val('');
+
+            // Close the modal
+            $('#productFormModal').fadeOut();
+
+        }
+        catch (err)
+        {
+            console.error("Error Occur : ", err)
+        }
+    })
+
+    // Handle form submission to include product data
+    $('#btnsubmit').click(function (e) {
+        e.preventDefault(); // Prevent form submission
+
+        // Collect product data from the table
+        var productData = [];
+        $('#mytblprddata tr').each(function () {
+            var productName = $(this).find('td').eq(0).text();
+            var qty = $(this).find('td').eq(1).text();
+            var price = $(this).find('td').eq(2).text();
+            productData.push({ ProductName: productName, Qty: qty, Price: price });
+        });
+
+        // Add the product data to the hidden field
+        $('#hiddenProductData').val(JSON.stringify(productData));
+
+        // Now submit the form
+        $('#billForm').submit();
+    });
+
+
+</script>
+
+
+
+
